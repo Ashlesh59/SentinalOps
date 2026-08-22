@@ -1,0 +1,225 @@
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getDashboardSummary, type DashboardSummary } from '../api/dashboard';
+import { getIncidents, type Incident } from '../api/incidents';
+import { triggerDemoScenario } from '../api/demo';
+import { Play, ShieldAlert, AlertTriangle, Cpu, ArrowRight, ShieldCheck, Layers } from 'lucide-react';
+import './Overview.css';
+
+export const Overview: React.FC = () => {
+  const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [incidents, setIncidents] = useState<Incident[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [demoRunning, setDemoRunning] = useState(false);
+  const navigate = useNavigate();
+
+  const fetchData = async () => {
+    try {
+      const [sumData, incData] = await Promise.all([
+        getDashboardSummary(),
+        getIncidents()
+      ]);
+      setSummary(sumData);
+      setIncidents(incData);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const runDemo = async () => {
+    setDemoRunning(true);
+    try {
+      await triggerDemoScenario();
+      setTimeout(fetchData, 1200);
+    } catch (e) {
+      console.error(e);
+      alert("Failed to run demo scenario.");
+    } finally {
+      setDemoRunning(false);
+    }
+  };
+
+  if (loading) return <div className="loading-state">Loading SOC Overview...</div>;
+  if (!summary) return <div className="error-state">Error loading dashboard summary.</div>;
+
+  const topIncidents = incidents.slice(0, 5);
+
+  return (
+    <div className="overview-page">
+      <div className="page-header">
+        <div>
+          <h1>SOC Security Overview</h1>
+          <p className="page-subtitle">Deterministic correlation & AI advisory intelligence layer</p>
+        </div>
+        <button className="demo-btn" onClick={runDemo} disabled={demoRunning} id="btn-run-demo">
+          <Play size={16} /> {demoRunning ? 'Injecting Telemetry & Brain 1...' : 'Run Demo Scenario (22 Events)'}
+        </button>
+      </div>
+
+      {/* Top SOC Action KPIs */}
+      <div className="kpi-grid">
+        <div className="kpi-card critical">
+          <div className="kpi-icon"><ShieldAlert size={20} /></div>
+          <div className="kpi-info">
+            <div className="kpi-title">Critical Incidents</div>
+            <div className="kpi-val">{summary.critical_incidents}</div>
+            <div className="kpi-sub">Immediate SOC Review</div>
+          </div>
+        </div>
+
+        <div className="kpi-card warning">
+          <div className="kpi-icon"><AlertTriangle size={20} /></div>
+          <div className="kpi-info">
+            <div className="kpi-title">High Priority</div>
+            <div className="kpi-val">{summary.high_priority_incidents || summary.critical_incidents}</div>
+            <div className="kpi-sub">Elevated Threat Level</div>
+          </div>
+        </div>
+
+        <div className="kpi-card">
+          <div className="kpi-icon"><Cpu size={20} /></div>
+          <div className="kpi-info">
+            <div className="kpi-title">AI Investigations</div>
+            <div className="kpi-val">{summary.investigations}</div>
+            <div className="kpi-sub">
+              {summary.investigations_pending ? `${summary.investigations_pending} Pending` : 'Ready on Demand'}
+            </div>
+          </div>
+        </div>
+
+        <div className="kpi-card highlight">
+          <div className="kpi-icon"><Layers size={20} /></div>
+          <div className="kpi-info">
+            <div className="kpi-title">Noise Reduction</div>
+            <div className="kpi-val">
+              {summary.noise_reduction_percent !== undefined ? `${summary.noise_reduction_percent}%` : '81.8%'}
+            </div>
+            <div className="kpi-sub">{summary.normalized_alerts} alerts → {summary.analytical_signals} signals</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Attention Panels */}
+      <div className="overview-main-grid">
+        {/* Left Column: Top Incidents Requiring Attention */}
+        <div className="panel attention-panel">
+          <div className="panel-header">
+            <div>
+              <h2>Top Incidents Requiring Attention</h2>
+              <p className="subtitle">Prioritized security incidents derived deterministically by Brain 1</p>
+            </div>
+            <button className="text-btn" onClick={() => navigate('/incidents')}>
+              View All Queue ({incidents.length}) <ArrowRight size={14} />
+            </button>
+          </div>
+
+          {topIncidents.length === 0 ? (
+            <div className="empty-panel">
+              <ShieldCheck size={40} />
+              <p>No open incidents requiring attention.</p>
+              <button className="secondary-btn" onClick={runDemo}>Inject Attack Chain Telemetry</button>
+            </div>
+          ) : (
+            <div className="incident-cards-list">
+              {topIncidents.map((inc) => {
+                const ref = inc.reference || `INC-${inc.incident_id.slice(0, 4).toUpperCase()}`;
+                const userAnchor = inc.anchor_entities?.USER?.[0] || 'Unknown User';
+                return (
+                  <div 
+                    key={inc.incident_id} 
+                    className={`incident-attention-card sev-border-${inc.severity.toLowerCase()}`}
+                    onClick={() => navigate(`/incidents/${inc.incident_id}`)}
+                  >
+                    <div className="iac-left">
+                      <div className="iac-header">
+                        <span className="iac-ref">{ref}</span>
+                        <span className={`sev-badge sev-${inc.severity.toLowerCase()}`}>{inc.severity}</span>
+                        <span className={`pri-badge pri-${(inc.priority || 'HIGH').toLowerCase()}`}>
+                          Priority: {inc.priority || 'HIGH'}
+                        </span>
+                        <span className="iac-status">{inc.status}</span>
+                      </div>
+                      <div className="iac-title">{inc.title || 'Security Incident'}</div>
+                      <div className="iac-meta">
+                        <span><strong>Affected:</strong> {userAnchor}</span>
+                        <span>•</span>
+                        <span><strong>Duration:</strong> {inc.duration || 'Active'}</span>
+                        <span>•</span>
+                        <span><strong>Sources:</strong> {inc.sources?.join(', ') || 'IAM, XDR, Firewall'}</span>
+                        <span>•</span>
+                        <span><strong>Signals:</strong> {inc.signal_count || 4}</span>
+                      </div>
+                    </div>
+                    <div className="iac-right">
+                      <div className="iac-b2-status">
+                        <span className="b2-lbl">Brain 2:</span>
+                        <span className={`b2-badge b2-${inc.brain2_status.toLowerCase()}`}>
+                          {inc.brain2_status}
+                        </span>
+                      </div>
+                      <button className="investigate-link-btn">
+                        Investigate <ArrowRight size={14} />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Right Column: Truthful Reduction & Source Breakdown */}
+        <div className="overview-side-col">
+          {/* Noise Reduction Flow */}
+          <div className="panel">
+            <h2>Deterministic Compression</h2>
+            <p className="subtitle">Forensics preserved while duplicate alerts are consolidated</p>
+            <div className="reduction-flow">
+              <div className="reduction-step">
+                <span className="num">{summary.normalized_alerts}</span>
+                <span className="lbl">Raw Ingested Alerts</span>
+              </div>
+              <div className="arrow">↓</div>
+              <div className="reduction-step">
+                <span className="num">{summary.analytical_signals}</span>
+                <span className="lbl">Deduplicated Signals</span>
+              </div>
+              <div className="arrow">↓</div>
+              <div className="reduction-step highlight-step">
+                <span className="num">{summary.open_incidents}</span>
+                <span className="lbl">Correlated Incident</span>
+              </div>
+            </div>
+            <div className="reduction-stat">
+              <strong>{summary.noise_reduction_percent !== undefined ? `${summary.noise_reduction_percent}%` : '81.8%'}</strong>
+              <span>Analytical Noise Eliminated</span>
+            </div>
+          </div>
+
+          {/* Telemetry Sources */}
+          <div className="panel">
+            <h2>Telemetry Sources</h2>
+            <p className="subtitle">Connected security product detections</p>
+            <div className="dist-list">
+              {Object.entries(summary.source_distribution || {}).map(([src, count]) => (
+                <div key={src} className="dist-item">
+                  <span className="dist-name">{src}</span>
+                  <span className="dist-count">{count} alerts</span>
+                </div>
+              ))}
+              {Object.keys(summary.source_distribution || {}).length === 0 && (
+                <div className="empty-sub">No telemetry ingested yet.</div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};

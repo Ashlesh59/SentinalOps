@@ -1,0 +1,221 @@
+.incidents-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.queue-count-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--bg-tertiary);
+  color: var(--color-sand);
+  border: 1px solid var(--border-color);
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.table-container {
+  background-color: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+  box-shadow: var(--shadow-sm);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.data-table th, .data-table td {
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border-color);
+  vertical-align: middle;
+}
+
+.data-table th {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background-color: var(--bg-secondary);
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
+
+.clickable-row {
+  cursor: pointer;
+  transition: background-color 0.15s;
+}
+
+.clickable-row:hover {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+.clean-ref-tag {
+  font-family: monospace;
+  font-weight: 700;
+  color: var(--color-sand);
+  background: rgba(0, 0, 0, 0.35);
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-xs);
+  border: 1px solid var(--border-color);
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.title-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  max-width: 280px;
+}
+
+.title-cell strong {
+  color: var(--color-pearl);
+  font-size: 0.9rem;
+  line-height: 1.3;
+}
+
+.type-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.status-tag {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #69db7c;
+  background: rgba(105, 219, 124, 0.15);
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--radius-xs);
+  text-transform: uppercase;
+}
+
+.entity-cell {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  white-space: nowrap;
+}
+
+.entity-cell strong {
+  color: var(--text-muted);
+}
+
+.time-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  white-space: nowrap;
+}
+
+.dur-badge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-pearl);
+}
+
+.time-sub {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.sources-wrap {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.src-pill {
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: var(--bg-tertiary);
+  color: var(--color-sand);
+  border: 1px solid var(--border-color);
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--radius-xs);
+  white-space: nowrap;
+}
+
+.counts-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  white-space: nowrap;
+}
+
+.sig-count {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-pearl);
+}
+
+.evid-count {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.row-action-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.clickable-row:hover .row-action-btn {
+  background: #339af0;
+  color: #fff;
+  border-color: #339af0;
+}
+
+.stale-badge {
+  margin-left: 0.4rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.1rem 0.3rem;
+  background-color: rgba(255, 169, 77, 0.2);
+  color: #ffa94d;
+  border: 1px solid rgba(255, 169, 77, 0.5);
+  border-radius: var(--radius-xs);
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--text-muted);
+  background-color: var(--bg-panel);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  gap: 0.75rem;
+}
+
+.empty-state h3 {
+  margin: 0;
+  color: var(--color-pearl);
+}
+
+.empty-state p {
+  margin: 0;
+  max-width: 400px;
+}

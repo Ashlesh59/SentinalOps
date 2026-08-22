@@ -1,0 +1,490 @@
+{
+  "scenarios": {
+    "A": {
+      "description": "Real Attack: Unusual login, suspicious powershell, malicious outbound, credential dumping",
+      "expected_incidents": 1,
+      "events": [
+        {
+          "fixture_id": "A1",
+          "tenant_id": "tenant-1",
+          "source_type": "iam",
+          "source_vendor": "Okta",
+          "source_product": "SSO",
+          "source_event_id": "okta-A1",
+          "received_at": "2026-08-22T00:00:00Z",
+          "payload": {
+            "event": "unusual_login",
+            "user": "alice",
+            "src_ip": "10.0.0.5",
+            "timestamp": "2026-08-22T00:00:00Z",
+            "severity": "medium"
+          }
+        },
+        {
+          "fixture_id": "A2",
+          "tenant_id": "tenant-1",
+          "source_type": "xdr",
+          "source_vendor": "CrowdStrike",
+          "source_product": "Falcon",
+          "source_event_id": "cs-A2",
+          "received_at": "2026-08-22T00:05:00Z",
+          "payload": {
+            "event": "suspicious_powershell",
+            "user": "alice",
+            "host": "FIN-PROD",
+            "process": "powershell.exe",
+            "command_line": "-enc ZWNob...",
+            "timestamp": "2026-08-22T00:05:00Z",
+            "severity": "high"
+          }
+        },
+        {
+          "fixture_id": "A3",
+          "tenant_id": "tenant-1",
+          "source_type": "fw",
+          "source_vendor": "PaloAlto",
+          "source_product": "PanOS",
+          "source_event_id": "pa-A3",
+          "received_at": "2026-08-22T00:10:00Z",
+          "payload": {
+            "event": "malicious_outbound",
+            "src_ip": "10.0.0.5",
+            "dst_ip": "198.51.100.1",
+            "domain": "evil.com",
+            "timestamp": "2026-08-22T00:10:00Z",
+            "severity": "high"
+          }
+        },
+        {
+          "fixture_id": "A4",
+          "tenant_id": "tenant-1",
+          "source_type": "xdr",
+          "source_vendor": "CrowdStrike",
+          "source_product": "Falcon",
+          "source_event_id": "cs-A4",
+          "received_at": "2026-08-22T00:15:00Z",
+          "payload": {
+            "event": "credential_dumping",
+            "user": "SYSTEM",
+            "host": "FIN-PROD",
+            "process": "lsass.exe",
+            "timestamp": "2026-08-22T00:15:00Z",
+            "severity": "critical"
+          }
+        }
+      ]
+    },
+    "B": {
+      "description": "Exact Duplicate: Same vendor event delivered twice",
+      "expected_incidents": 0,
+      "expected_duplicates": 1,
+      "events": [
+        {
+          "fixture_id": "B1",
+          "tenant_id": "tenant-1",
+          "source_type": "xdr",
+          "source_vendor": "CrowdStrike",
+          "source_product": "Falcon",
+          "source_event_id": "cs-B1",
+          "received_at": "2026-08-22T01:00:00Z",
+          "payload": {
+            "event": "malware_detected",
+            "user": "bob",
+            "host": "DEV-01",
+            "file_hash": "abcd1234abcd1234abcd1234abcd1234",
+            "timestamp": "2026-08-22T01:00:00Z",
+            "severity": "high"
+          }
+        },
+        {
+          "fixture_id": "B2",
+          "tenant_id": "tenant-1",
+          "source_type": "xdr",
+          "source_vendor": "CrowdStrike",
+          "source_product": "Falcon",
+          "source_event_id": "cs-B1",
+          "received_at": "2026-08-22T01:05:00Z",
+          "payload": {
+            "event": "malware_detected",
+            "user": "bob",
+            "host": "DEV-01",
+            "file_hash": "abcd1234abcd1234abcd1234abcd1234",
+            "timestamp": "2026-08-22T01:00:00Z",
+            "severity": "high"
+          }
+        }
+      ]
+    },
+    "C": {
+      "description": "Repeated Detection Burst: 10 credential dumping alerts",
+      "expected_incidents": 1,
+      "expected_aggregations": 1,
+      "events": [
+        {
+          "fixture_id": "C1",
+          "tenant_id": "tenant-1",
+          "source_type": "xdr",
+          "source_vendor": "CrowdStrike",
+          "source_product": "Falcon",
+          "source_event_id": "cs-C1",
+          "received_at": "2026-08-22T01:30:00Z",
+          "payload": {
+            "event": "credential_dumping",
+            "user": "bob",
+            "host": "DEV-01",
+            "process": "lsass.exe",
+            "timestamp": "2026-08-22T01:30:00Z",
+            "severity": "critical"
+          }
+        },
+        {
+          "fixture_id": "C2",
+          "tenant_id": "tenant-1",
+          "source_type": "xdr",
+          "source_vendor": "CrowdStrike",
+          "source_product": "Falcon",
+          "source_event_id": "cs-C2",
+          "received_at": "2026-08-22T01:31:00Z",
+          "payload": {
+            "event": "credential_dumping",
+            "user": "bob",
+            "host": "DEV-01",
+            "process": "lsass.exe",
+            "timestamp": "2026-08-22T01:31:00Z",
+            "severity": "critical"
+          }
+        },
+        {
+          "fixture_id": "C3",
+          "tenant_id": "tenant-1",
+          "source_type": "xdr",
+          "source_vendor": "CrowdStrike",
+          "source_product": "Falcon",
+          "source_event_id": "cs-C3",
+          "received_at": "2026-08-22T01:32:00Z",
+          "payload": {
+            "event": "credential_dumping",
+            "user": "bob",
+            "host": "DEV-01",
+            "process": "lsass.exe",
+            "timestamp": "2026-08-22T01:32:00Z",
+            "severity": "critical"
+          }
+        },
+        {
+          "fixture_id": "C4",
+          "tenant_id": "tenant-1",
+          "source_type": "xdr",
+          "source_vendor": "CrowdStrike",
+          "source_product": "Falcon",
+          "source_event_id": "cs-C4",
+          "received_at": "2026-08-22T01:33:00Z",
+          "payload": {
+            "event": "credential_dumping",
+            "user": "bob",
+            "host": "DEV-01",
+            "process": "lsass.exe",
+            "timestamp": "2026-08-22T01:33:00Z",
+            "severity": "critical"
+          }
+        },
+        {
+          "fixture_id": "C5",
+          "tenant_id": "tenant-1",
+          "source_type": "xdr",
+          "source_vendor": "CrowdStrike",
+          "source_product": "Falcon",
+          "source_event_id": "cs-C5",
+          "received_at": "2026-08-22T01:34:00Z",
+          "payload": {
+            "event": "credential_dumping",
+            "user": "bob",
+            "host": "DEV-01",
+            "process": "lsass.exe",
+            "timestamp": "2026-08-22T01:34:00Z",
+            "severity": "critical"
+          }
+        },
+        {
+          "fixture_id": "C6",
+          "tenant_id": "tenant-1",
+          "source_type": "xdr",
+          "source_vendor": "CrowdStrike",
+          "source_product": "Falcon",
+          "source_event_id": "cs-C6",
+          "received_at": "2026-08-22T01:35:00Z",
+          "payload": {
+            "event": "credential_dumping",
+            "user": "bob",
+            "host": "DEV-01",
+            "process": "lsass.exe",
+            "timestamp": "2026-08-22T01:35:00Z",
+            "severity": "critical"
+          }
+        },
+        {
+          "fixture_id": "C7",
+          "tenant_id": "tenant-1",
+          "source_type": "xdr",
+          "source_vendor": "CrowdStrike",
+          "source_product": "Falcon",
+          "source_event_id": "cs-C7",
+          "received_at": "2026-08-22T01:36:00Z",
+          "payload": {
+            "event": "credential_dumping",
+            "user": "bob",
+            "host": "DEV-01",
+            "process": "lsass.exe",
+            "timestamp": "2026-08-22T01:36:00Z",
+            "severity": "critical"
+          }
+        },
+        {
+          "fixture_id": "C8",
+          "tenant_id": "tenant-1",
+          "source_type": "xdr",
+          "source_vendor": "CrowdStrike",
+          "source_product": "Falcon",
+          "source_event_id": "cs-C8",
+          "received_at": "2026-08-22T01:37:00Z",
+          "payload": {
+            "event": "credential_dumping",
+            "user": "bob",
+            "host": "DEV-01",
+            "process": "lsass.exe",
+            "timestamp": "2026-08-22T01:37:00Z",
+            "severity": "critical"
+          }
+        },
+        {
+          "fixture_id": "C9",
+          "tenant_id": "tenant-1",
+          "source_type": "xdr",
+          "source_vendor": "CrowdStrike",
+          "source_product": "Falcon",
+          "source_event_id": "cs-C9",
+          "received_at": "2026-08-22T01:38:00Z",
+          "payload": {
+            "event": "credential_dumping",
+            "user": "bob",
+            "host": "DEV-01",
+            "process": "lsass.exe",
+            "timestamp": "2026-08-22T01:38:00Z",
+            "severity": "critical"
+          }
+        },
+        {
+          "fixture_id": "C10",
+          "tenant_id": "tenant-1",
+          "source_type": "xdr",
+          "source_vendor": "CrowdStrike",
+          "source_product": "Falcon",
+          "source_event_id": "cs-C10",
+          "received_at": "2026-08-22T01:39:00Z",
+          "payload": {
+            "event": "credential_dumping",
+            "user": "bob",
+            "host": "DEV-01",
+            "process": "lsass.exe",
+            "timestamp": "2026-08-22T01:39:00Z",
+            "severity": "critical"
+          }
+        }
+      ]
+    },
+    "D": {
+      "description": "Unrelated Alerts: Different users, different hosts",
+      "expected_incidents": 0,
+      "events": [
+        {
+          "fixture_id": "D1",
+          "tenant_id": "tenant-1",
+          "source_type": "xdr",
+          "source_vendor": "CrowdStrike",
+          "source_product": "Falcon",
+          "source_event_id": "cs-D1",
+          "received_at": "2026-08-22T02:00:00Z",
+          "payload": {
+            "event": "malware_detected",
+            "user": "carol",
+            "host": "HR-01",
+            "timestamp": "2026-08-22T02:00:00Z",
+            "severity": "medium"
+          }
+        },
+        {
+          "fixture_id": "D2",
+          "tenant_id": "tenant-1",
+          "source_type": "xdr",
+          "source_vendor": "CrowdStrike",
+          "source_product": "Falcon",
+          "source_event_id": "cs-D2",
+          "received_at": "2026-08-22T02:05:00Z",
+          "payload": {
+            "event": "suspicious_powershell",
+            "user": "dave",
+            "host": "ENG-02",
+            "timestamp": "2026-08-22T02:05:00Z",
+            "severity": "medium"
+          }
+        }
+      ]
+    },
+    "E": {
+      "description": "Benign Admin: Backup script, not correlated with attacks",
+      "expected_incidents": 0,
+      "events": [
+        {
+          "fixture_id": "E1",
+          "tenant_id": "tenant-1",
+          "source_type": "xdr",
+          "source_vendor": "CrowdStrike",
+          "source_product": "Falcon",
+          "source_event_id": "cs-E1",
+          "received_at": "2026-08-22T03:00:00Z",
+          "payload": {
+            "event": "process_execution",
+            "user": "admin",
+            "host": "BACKUP-SVR",
+            "process": "backup.ps1",
+            "timestamp": "2026-08-22T03:00:00Z",
+            "severity": "low"
+          }
+        }
+      ]
+    },
+    "F": {
+      "description": "Cross-Tenant Trap: Identical username, hostname, IP, timestamp",
+      "expected_incidents": 0,
+      "events": [
+        {
+          "fixture_id": "F1",
+          "tenant_id": "tenant-1",
+          "source_type": "xdr",
+          "source_vendor": "CrowdStrike",
+          "source_product": "Falcon",
+          "source_event_id": "cs-F1",
+          "received_at": "2026-08-22T04:00:00Z",
+          "payload": {
+            "event": "malware_detected",
+            "user": "eve",
+            "host": "DEV-99",
+            "src_ip": "10.0.0.99",
+            "timestamp": "2026-08-22T04:00:00Z",
+            "severity": "high"
+          }
+        },
+        {
+          "fixture_id": "F2",
+          "tenant_id": "tenant-2",
+          "source_type": "xdr",
+          "source_vendor": "CrowdStrike",
+          "source_product": "Falcon",
+          "source_event_id": "cs-F2",
+          "received_at": "2026-08-22T04:00:00Z",
+          "payload": {
+            "event": "malware_detected",
+            "user": "eve",
+            "host": "DEV-99",
+            "src_ip": "10.0.0.99",
+            "timestamp": "2026-08-22T04:00:00Z",
+            "severity": "high"
+          }
+        }
+      ]
+    },
+    "G": {
+      "description": "Shared NAT/IP Trap: Unrelated users/devices on same IP",
+      "expected_incidents": 0,
+      "events": [
+        {
+          "fixture_id": "G1",
+          "tenant_id": "tenant-1",
+          "source_type": "iam",
+          "source_vendor": "Okta",
+          "source_product": "SSO",
+          "source_event_id": "okta-G1",
+          "received_at": "2026-08-22T05:00:00Z",
+          "payload": {
+            "event": "failed_login",
+            "user": "frank",
+            "src_ip": "203.0.113.10",
+            "timestamp": "2026-08-22T05:00:00Z",
+            "severity": "medium"
+          }
+        },
+        {
+          "fixture_id": "G2",
+          "tenant_id": "tenant-1",
+          "source_type": "iam",
+          "source_vendor": "Okta",
+          "source_product": "SSO",
+          "source_event_id": "okta-G2",
+          "received_at": "2026-08-22T05:05:00Z",
+          "payload": {
+            "event": "failed_login",
+            "user": "grace",
+            "src_ip": "203.0.113.10",
+            "timestamp": "2026-08-22T05:05:00Z",
+            "severity": "medium"
+          }
+        }
+      ]
+    },
+    "H": {
+      "description": "Late Arrival: Event occurs in timeline but ingested later",
+      "expected_incidents": 1,
+      "events": [
+        {
+          "fixture_id": "H1",
+          "tenant_id": "tenant-1",
+          "source_type": "xdr",
+          "source_vendor": "CrowdStrike",
+          "source_product": "Falcon",
+          "source_event_id": "cs-H1",
+          "received_at": "2026-08-22T06:00:00Z",
+          "payload": {
+            "event": "suspicious_powershell",
+            "user": "heidi",
+            "host": "WEB-01",
+            "timestamp": "2026-08-22T06:00:00Z",
+            "severity": "high"
+          }
+        },
+        {
+          "fixture_id": "H2",
+          "tenant_id": "tenant-1",
+          "source_type": "xdr",
+          "source_vendor": "CrowdStrike",
+          "source_product": "Falcon",
+          "source_event_id": "cs-H2",
+          "received_at": "2026-08-22T06:10:00Z",
+          "payload": {
+            "event": "credential_dumping",
+            "user": "SYSTEM",
+            "host": "WEB-01",
+            "timestamp": "2026-08-22T06:05:00Z",
+            "severity": "critical"
+          }
+        },
+        {
+          "fixture_id": "H3",
+          "tenant_id": "tenant-1",
+          "source_type": "fw",
+          "source_vendor": "PaloAlto",
+          "source_product": "PanOS",
+          "source_event_id": "pa-H3",
+          "received_at": "2026-08-22T09:00:00Z",
+          "payload": {
+            "event": "malicious_outbound",
+            "src_ip": "10.0.0.20",
+            "dst_ip": "198.51.100.2",
+            "domain": "evil.com",
+            "timestamp": "2026-08-22T06:02:00Z",
+            "severity": "high"
+          }
+        }
+      ]
+    }
+  }
+}

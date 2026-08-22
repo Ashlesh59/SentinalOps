@@ -1,0 +1,5 @@
+source_event_id,timestamp,vendor,product,category,class_name,alert_type,severity,user,src_ip,process_name
+csv-001,2023-10-01T15:00:00Z,SentinelOps_Demo,Synthetic,AUTHENTICATION,USER_SESSION,Login Failure,MEDIUM,bob_tester,10.0.0.5,
+csv-002,2023-10-01T15:05:00Z,SentinelOps_Demo,Synthetic,ENDPOINT_ACTIVITY,PROCESS_ACTIVITY,Suspicious Execution,HIGH,bob_tester,10.0.0.5,cmd.exe
+malformed-row-missing-id,2023-10-01T15:10:00Z
+csv-003,2023-10-01T15:15:00Z,SentinelOps_Demo,Synthetic,NETWORK_ACTIVITY,NETWORK_FLOW,Port Scan,LOW,,10.0.0.6,

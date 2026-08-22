@@ -1,0 +1,1 @@
+# Ensure ingestion package works
