@@ -1,9 +1,18 @@
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
+from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.database import get_db
-from src.db.models import IncidentModel, CorrelationEdgeModel, IncidentSignalModel, AggregatedSignalModel, InvestigationJobModel, InvestigationResultModel
+from src.db.models import (
+    IncidentModel, 
+    CorrelationEdgeModel, 
+    IncidentSignalModel, 
+    AggregatedSignalModel, 
+    AggregatedSignalAlertModel, 
+    NormalizedAlertModel, 
+    InvestigationJobModel, 
+    InvestigationResultModel
+)
 
 router = APIRouter()
 
@@ -117,10 +126,17 @@ async def get_incident(incident_id: str, tenant_id: str, db: AsyncSession = Depe
     # fetch summary of signals
     sig_ids = (await db.execute(select(IncidentSignalModel.aggregated_signal_id).where(IncidentSignalModel.incident_id == inc.id))).scalars().all()
     signals = []
+    sources = []
     if sig_ids:
         signals = (await db.execute(select(AggregatedSignalModel).where(AggregatedSignalModel.id.in_(sig_ids)))).scalars().all()
+        alerts_res = await db.execute(
+            select(NormalizedAlertModel.source_vendor, NormalizedAlertModel.source_product)
+            .join(AggregatedSignalAlertModel, AggregatedSignalAlertModel.normalized_alert_id == NormalizedAlertModel.id)
+            .where(AggregatedSignalAlertModel.aggregated_signal_id.in_(sig_ids))
+            .distinct()
+        )
+        sources = [f"{v} {p}".strip() for v, p in alerts_res.all() if v or p]
 
-    sources = list(set(s.entities.get("source_product", "UNKNOWN") for s in signals if s.entities)) if signals else []
     evidence_count = sum(s.occurrence_count for s in signals) if signals else 0
     ref_suffix = str(inc.id)[:4].upper()
     reference = f"INC-{ref_suffix}"
@@ -174,13 +190,24 @@ async def get_incident_timeline(incident_id: str, tenant_id: str, db: AsyncSessi
     
     out = []
     for s in signals:
+        alert_res = await db.execute(
+            select(NormalizedAlertModel)
+            .join(AggregatedSignalAlertModel, AggregatedSignalAlertModel.normalized_alert_id == NormalizedAlertModel.id)
+            .where(AggregatedSignalAlertModel.aggregated_signal_id == s.id)
+            .limit(1)
+        )
+        alert = alert_res.scalars().first()
+        alert_title = alert.alert_type or alert.message or "Suspicious Activity" if alert else "Security Alert"
+        source_label = f"{alert.source_vendor} {alert.source_product}" if alert else "Security Log"
+        cat = alert.category_name if alert else "DETECTION"
+
         out.append({
             "timestamp": s.first_seen.isoformat(),
-            "category": s.entities.get("category_name", "UNKNOWN") if s.entities else "UNKNOWN",
-            "alert_type": s.entities.get("alert_type", "UNKNOWN") if s.entities else "UNKNOWN",
+            "category": cat,
+            "alert_type": alert_title,
             "severity": s.severity,
             "occurrence_count": s.occurrence_count,
-            "source": s.entities.get("source_product", "UNKNOWN") if s.entities else "UNKNOWN",
+            "source": source_label,
             "entities": s.entities
         })
     return out
