@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { Upload as UploadIcon, Shield, Activity, AlertTriangle, LayoutDashboard, Server, Settings } from 'lucide-react';
+import { Shield, Activity, AlertTriangle, LayoutDashboard, Server, Settings } from 'lucide-react';
 import './Layout.css';
 import { getSystemHealth } from '../api/system';
 import { DEMO_TENANT_ID } from '../api/client';
@@ -24,9 +24,6 @@ export const Layout: React.FC = () => {
         <nav className="sidebar-nav">
           <NavLink to="/" className={({isActive}) => `nav-item ${isActive ? 'active' : ''}`}>
             <LayoutDashboard size={20} /> Overview
-          </NavLink>
-          <NavLink to="/upload" className={({isActive}) => `nav-item ${isActive ? 'active' : ''}`}>
-            <UploadIcon size={20} /> Upload & Analyze
           </NavLink>
           <NavLink to="/incidents" className={({isActive}) => `nav-item ${isActive ? 'active' : ''}`}>
             <Activity size={20} /> Incidents
