@@ -724,3 +724,62 @@
 .secondary-btn:hover {
   background: rgba(255, 255, 255, 0.15);
 }
+
+/* ─── SYSTEM STATUS BADGES ─── */
+.sys-overall-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.sys-status-ok {
+  background: rgba(105, 219, 124, 0.15);
+  color: #69db7c;
+  border: 1px solid rgba(105, 219, 124, 0.45);
+}
+
+.sys-status-warn {
+  background: rgba(252, 196, 25, 0.18);
+  color: #fcc419;
+  border: 1px solid rgba(252, 196, 25, 0.45);
+}
+
+.sys-status-fail {
+  background: rgba(255, 77, 77, 0.2);
+  color: #ff4d4d;
+  border: 1px solid rgba(255, 77, 77, 0.5);
+}
+
+.sys-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.sys-ok {
+  background: rgba(105, 219, 124, 0.15);
+  color: #69db7c;
+  border: 1px solid rgba(105, 219, 124, 0.35);
+}
+
+.sys-degraded {
+  background: rgba(252, 196, 25, 0.15);
+  color: #fcc419;
+  border: 1px solid rgba(252, 196, 25, 0.35);
+}
+
+.sys-unknown {
+  background: rgba(255, 77, 77, 0.15);
+  color: #ff6b6b;
+  border: 1px solid rgba(255, 77, 77, 0.35);
+}

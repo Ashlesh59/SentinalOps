@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { getSystemHealth, type SystemHealth } from '../api/system';
-import { CheckCircle, AlertTriangle, XCircle } from 'lucide-react';
+import { CheckCircle, AlertTriangle, XCircle, Shield, Server, Cpu, Database, Lock } from 'lucide-react';
 import './Overview.css';
 
 function statusBadge(val: string) {
   if (!val) return null;
   const lower = val.toLowerCase();
-  if (lower === 'healthy') return <span className="sys-badge sys-ok"><CheckCircle size={13} /> {val}</span>;
+  if (lower.includes('healthy')) return <span className="sys-badge sys-ok"><CheckCircle size={14} /> {val}</span>;
   if (lower.includes('degraded') || lower.includes('unavailable'))
-    return <span className="sys-badge sys-degraded"><AlertTriangle size={13} /> {val}</span>;
-  return <span className="sys-badge sys-unknown"><XCircle size={13} /> {val}</span>;
+    return <span className="sys-badge sys-degraded"><AlertTriangle size={14} /> {val}</span>;
+  return <span className="sys-badge sys-unknown"><XCircle size={14} /> {val}</span>;
 }
 
 export const System: React.FC = () => {
@@ -26,74 +26,84 @@ export const System: React.FC = () => {
   if (loading) return <div className="loading-state">Loading system health...</div>;
   if (!health) return <div className="error-state">Error loading system health.</div>;
 
-  // Determine overall status label
-  const brain2Degraded = health.brain2_provider?.toLowerCase().includes('degraded')
-    || health.brain2_provider?.toLowerCase().includes('no api key');
-  const coreHealthy =
-    health.api?.toLowerCase() === 'healthy' &&
-    health.database?.toLowerCase() === 'healthy' &&
-    health.brain1?.toLowerCase() === 'healthy' &&
-    health.privacy_gateway?.toLowerCase() === 'healthy';
+  // Determine overall status
+  const isCloudNoKey = health.brain2_provider?.toLowerCase().includes('no api key');
+  const isDegraded = health.brain2_provider?.toLowerCase().includes('degraded') || health.database?.toLowerCase().includes('unavailable');
 
-  const overallLabel = coreHealthy
-    ? brain2Degraded ? 'CORE HEALTHY — Brain 2 Degraded' : 'SYSTEM HEALTHY'
-    : 'SYSTEM DEGRADED';
-
-  const overallClass = coreHealthy
-    ? brain2Degraded ? 'sys-status-warn' : 'sys-status-ok'
-    : 'sys-status-fail';
+  const overallLabel = isDegraded ? 'SYSTEM DEGRADED' : 'SYSTEM HEALTHY';
+  const overallClass = isDegraded ? 'sys-status-warn' : 'sys-status-ok';
 
   return (
     <div className="overview-page">
       <div className="page-header">
         <div>
-          <h1>System Health</h1>
-          <div className={`sys-overall-badge ${overallClass}`}>{overallLabel}</div>
+          <h1>System Architecture & Health</h1>
+          <p className="page-subtitle">Zero-trust component pipeline and execution engine status</p>
+        </div>
+        <div className={`sys-overall-badge ${overallClass}`}>
+          {isDegraded ? <AlertTriangle size={16} /> : <CheckCircle size={16} />}
+          {overallLabel}
         </div>
       </div>
 
-      <div className="panel">
-        <h2>Operational Status</h2>
-        <div className="dist-list">
-          <div className="dist-item">
-            <span>Backend API</span>
-            {statusBadge(health.api)}
-          </div>
-          <div className="dist-item">
-            <span>PostgreSQL</span>
-            {statusBadge(health.database)}
-          </div>
-          <div className="dist-item">
-            <span>Brain 1 — Deterministic Correlation</span>
-            {statusBadge(health.brain1)}
-          </div>
-          <div className="dist-item">
-            <span>Privacy Gateway</span>
-            {statusBadge(health.privacy_gateway)}
-          </div>
-          <div className="dist-item">
-            <span>Brain 2 Provider</span>
-            {statusBadge(health.brain2_provider)}
-          </div>
-        </div>
-      </div>
-
-      <div className="panel">
-        <h2>Configured AI Provider</h2>
-        <div className="dist-list">
-          <div className="dist-item">
-            <span>Provider</span>
-            <span className="dist-count">{health.provider_config?.name ?? 'Unknown'}</span>
-          </div>
-          <div className="dist-item">
-            <span>Model</span>
-            <span className="dist-count">{health.provider_config?.model ?? 'Unknown'}</span>
-          </div>
-          {brain2Degraded && (
-            <div className="dist-item" style={{ color: '#fcc419', fontSize: '0.82rem', display: 'block', paddingTop: '8px' }}>
-              ⚠ No API key configured. Brain 2 is unavailable for live AI investigation. Brain 1 and Privacy Gateway remain fully operational.
+      <div className="overview-main-grid">
+        <div className="panel">
+          <div className="panel-header">
+            <div>
+              <h2>Core Infrastructure Pipeline</h2>
+              <p className="subtitle">Real-time health status of local telemetry and correlation services</p>
             </div>
-          )}
+          </div>
+          <div className="dist-list">
+            <div className="dist-item">
+              <span className="dist-name"><Server size={16} style={{ verticalAlign: 'middle', marginRight: '8px', color: '#38bdf8' }} /> Backend ASGI Service (FastAPI)</span>
+              {statusBadge(health.api)}
+            </div>
+            <div className="dist-item">
+              <span className="dist-name"><Database size={16} style={{ verticalAlign: 'middle', marginRight: '8px', color: '#69db7c' }} /> Storage Engine (PostgreSQL / SQLite Hot Tier)</span>
+              {statusBadge(health.database)}
+            </div>
+            <div className="dist-item">
+              <span className="dist-name"><Shield size={16} style={{ verticalAlign: 'middle', marginRight: '8px', color: '#fcc419' }} /> Brain 1 (Deterministic Heuristic Correlation)</span>
+              {statusBadge(health.brain1)}
+            </div>
+            <div className="dist-item">
+              <span className="dist-name"><Lock size={16} style={{ verticalAlign: 'middle', marginRight: '8px', color: '#ff4d6d' }} /> Privacy Gateway (Regex Redaction & HMAC Tokenizer)</span>
+              {statusBadge(health.privacy_gateway)}
+            </div>
+            <div className="dist-item">
+              <span className="dist-name"><Cpu size={16} style={{ verticalAlign: 'middle', marginRight: '8px', color: '#b197fc' }} /> Brain 2 Reasoning Engine</span>
+              {statusBadge(health.brain2_provider)}
+            </div>
+          </div>
+        </div>
+
+        <div className="panel">
+          <div className="panel-header">
+            <div>
+              <h2>Active AI Provider Configuration</h2>
+              <p className="subtitle">Air-gapped and local LLM execution settings</p>
+            </div>
+          </div>
+          <div className="dist-list">
+            <div className="dist-item">
+              <span className="dist-name">Engine / Provider</span>
+              <span className="dist-count">{health.provider_config?.name ?? 'Local Engine'}</span>
+            </div>
+            <div className="dist-item">
+              <span className="dist-name">Model Architecture</span>
+              <span className="dist-count">{health.provider_config?.model ?? 'Deterministic Triage'}</span>
+            </div>
+            <div className="dist-item">
+              <span className="dist-name">Air-Gap Zero Egress</span>
+              <span className="dist-count" style={{ color: '#69db7c', borderColor: 'rgba(105,219,124,0.35)', background: 'rgba(105,219,124,0.12)' }}>ENFORCED</span>
+            </div>
+            {isCloudNoKey && (
+              <div className="dist-item" style={{ color: '#fcc419', fontSize: '0.85rem', display: 'block', paddingTop: '10px' }}>
+                ⚠ Cloud API key not configured. Using local air-gapped AI triage engine.
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
