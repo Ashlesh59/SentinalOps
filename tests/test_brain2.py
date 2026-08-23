@@ -55,7 +55,7 @@ async def test_data(session: AsyncSession):
         tenant_id=tenant_id,
         aggregation_key="test-sig",
         rule_version="v1",
-        creation_anchor_alert_id=str(uuid.uuid4()),
+        creation_anchor_alert_id=uuid.uuid4(),
         first_seen=datetime.datetime.utcnow(),
         last_seen=datetime.datetime.utcnow(),
         severity="HIGH"
@@ -171,7 +171,7 @@ async def test_brain2_adversarial_prompt_injection(session: AsyncSession, test_d
         tenant_id=tenant_id,
         aggregation_key="evil-sig",
         rule_version="v1",
-        creation_anchor_alert_id=str(uuid.uuid4()),
+        creation_anchor_alert_id=uuid.uuid4(),
         first_seen=datetime.datetime.utcnow(),
         last_seen=datetime.datetime.utcnow(),
         severity="HIGH",
