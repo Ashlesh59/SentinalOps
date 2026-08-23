@@ -1,21 +1,32 @@
 import os
+import uuid
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, desc
 
 from src.db.database import get_db
 from src.services.ingestion import IngestionService
+from src.services.pipeline_tracker import pipeline_tracker
 from src.brain1.engine import run_correlation
+from src.db.models import IncidentModel, InvestigationJobModel
+from src.brain2.worker import Brain2Worker
+from src.brain1.snapshot import SnapshotBuilder
+from src.brain2.selector import EvidenceSelector
 
 router = APIRouter(prefix="/api/v1/demo", tags=["demo"])
 
-# Use environment configuration as requested
 ENABLE_DEMO_SCENARIOS = os.environ.get("ENABLE_DEMO_SCENARIOS", "true").lower() == "true"
 DEMO_TENANT_ID = "tenant-test"
 
 async def run_demo_attack_chain(session: AsyncSession):
-    # This runs the demo attack chain end to end with 22 raw/normalized deliveries.
-    # Brain 1 will aggregate them into 4 analytical signals and correlate into 1 incident.
+    # Start live pipeline tracking
+    pipeline_tracker.start_pipeline("DEMO_ATTACK_CHAIN")
+    
+    # 1. Ingest Raw Telemetry
     ingestion_service = IngestionService(session)
+    
+    # Advance to Normalizing Evidence
+    pipeline_tracker.advance_stage("RECEIVING_TELEMETRY", "NORMALIZING_EVIDENCE")
     
     # 1. IAM Event (Unusual Authentication)
     iam_payload = {
@@ -55,7 +66,7 @@ async def run_demo_attack_chain(session: AsyncSession):
             payload=xdr_ps
         )
 
-    # 3. Exact Duplicate Deliveries (Testing duplicate handling)
+    # 3. Exact Duplicate Deliveries
     for dup_id in ["xdr-ps-01", "xdr-ps-02"]:
         xdr_dup = {
             "detected_at": "2023-10-01T14:05:10Z",
@@ -74,7 +85,7 @@ async def run_demo_attack_chain(session: AsyncSession):
             payload=xdr_dup
         )
 
-    # 4. XDR Events - 5 Credential Access alerts (lsass dumping)
+    # 4. XDR Events - 5 Credential Access alerts
     for i in range(1, 6):
         sec = i * 12
         xdr_cred = {
@@ -113,17 +124,55 @@ async def run_demo_attack_chain(session: AsyncSession):
             payload=fw_payload
         )
 
-    # Run Brain 1 to process the ingested events and create incidents
+    # 3. Brain 1 Heuristic Correlation
+    pipeline_tracker.advance_stage("NORMALIZING_EVIDENCE", "BRAIN1_CORRELATION")
     await run_correlation(session, DEMO_TENANT_ID)
 
+    # Find the newly generated or latest incident
+    inc = (await session.execute(
+        select(IncidentModel)
+        .where(IncidentModel.tenant_id == DEMO_TENANT_ID)
+        .order_by(desc(IncidentModel.last_seen))
+    )).scalars().first()
+
+    # 4. Privacy Preparation
+    pipeline_tracker.advance_stage("BRAIN1_CORRELATION", "PRIVACY_PREPARATION")
+    if inc:
+        builder = SnapshotBuilder(session, DEMO_TENANT_ID)
+        snapshot = await builder.build_snapshot(inc.id)
+        selector = EvidenceSelector()
+        safe_package = await selector.extract_package(snapshot)
+        
+        # 5. Brain 2 AI Investigation
+        pipeline_tracker.advance_stage("PRIVACY_PREPARATION", "BRAIN2_INVESTIGATION")
+        
+        # Create and execute investigation job
+        job = InvestigationJobModel(
+            incident_id=inc.id,
+            incident_version=inc.version,
+            tenant_id=DEMO_TENANT_ID,
+            status="PENDING",
+            provider="ollama",
+            model="llama3:latest"
+        )
+        session.add(job)
+        await session.commit()
+        await session.refresh(job)
+        
+        worker = Brain2Worker(session, DEMO_TENANT_ID)
+        await worker.process_job(job.id)
+
+    # 6. Complete
+    pipeline_tracker.complete_pipeline({
+        "raw_events": 22,
+        "analytical_signals": 4,
+        "correlated_incidents": 1
+    })
+
 @router.post("/scenarios/attack-chain", status_code=202)
-async def trigger_demo_scenario(background_tasks: BackgroundTasks, session: AsyncSession = Depends(get_db)):
+async def trigger_demo_scenario(session: AsyncSession = Depends(get_db)):
     if not ENABLE_DEMO_SCENARIOS:
         raise HTTPException(status_code=403, detail="Demo scenarios are disabled.")
     
-    # Run in background to not block the UI immediately, or we can await it if we want it synchronous.
-    # The instructions say "The frontend 'Run Demo Scenario' button must call the backend demo endpoint"
-    # Wait, the instruction says to use background tasks or similar. Actually, doing it synchronously is fine if it takes 100ms.
-    # We'll just run it synchronously so the UI can refresh immediately after the POST.
     await run_demo_attack_chain(session)
-    return {"status": "success", "message": "Demo scenario injected and Brain 1 executed."}
+    return {"status": "success", "message": "Demo scenario processed through full pipeline."}

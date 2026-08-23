@@ -25,3 +25,27 @@ export interface AiPolicy {
 
 export const getAiPolicy = () => 
   apiClient.get<AiPolicy>(`/system/ai-policy`);
+
+export interface PipelineStage {
+  id: string;
+  label: string;
+  status: 'idle' | 'pending' | 'running' | 'completed' | 'failed';
+  duration_ms?: number;
+}
+
+export interface PipelineStatus {
+  status: 'IDLE' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+  pipeline_type: string;
+  current_stage: string;
+  total_duration_ms: number;
+  stages: PipelineStage[];
+  metrics: {
+    raw_events: number;
+    normalized_alerts: number;
+    analytical_signals: number;
+    correlated_incidents: number;
+  };
+}
+
+export const getPipelineStatus = () => 
+  apiClient.get<PipelineStatus>(`/system/pipeline-status`);

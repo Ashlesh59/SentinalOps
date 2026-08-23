@@ -5,6 +5,7 @@ import { getIncidents, type Incident } from '../api/incidents';
 import { getAlerts, type Alert } from '../api/alerts';
 import { triggerDemoScenario } from '../api/demo';
 import { Play, ShieldAlert, AlertTriangle, Cpu, ArrowRight, ArrowDown, ShieldCheck, Layers, Terminal } from 'lucide-react';
+import { LiveAnalysis } from '../components/LiveAnalysis';
 import './Overview.css';
 
 export const Overview: React.FC = () => {
@@ -212,6 +213,9 @@ export const Overview: React.FC = () => {
 
         {/* Right Column: Truthful Reduction & Source Breakdown */}
         <div className="overview-side-col">
+          {/* Live Contextual Pipeline Analysis Component */}
+          <LiveAnalysis isTriggering={demoRunning} onFinished={fetchData} />
+
           {/* Noise Reduction Flow */}
           <div className="panel">
             <h2>Deterministic Compression</h2>

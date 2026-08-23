@@ -1,0 +1,216 @@
+/* ============================================================ */
+/* LIVE ANALYSIS CONTEXTUAL COMPONENT                           */
+/* ============================================================ */
+
+.live-analysis-card {
+  background: linear-gradient(145deg, #181b22 0%, #12141a 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 1.35rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+.live-analysis-card.live-active {
+  border: 1.5px solid rgba(56, 189, 248, 0.6);
+  box-shadow: 0 0 25px rgba(56, 189, 248, 0.2);
+}
+
+.live-analysis-card.live-done {
+  border-left: 4px solid #69db7c;
+}
+
+.la-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding-bottom: 0.85rem;
+}
+
+.la-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.la-live-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: #fff;
+  letter-spacing: 0.04em;
+}
+
+.la-pulse-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #38bdf8;
+  display: inline-block;
+}
+
+.la-pulse-dot.pulse {
+  background: #ff4d6d;
+  box-shadow: 0 0 10px #ff4d6d;
+  animation: pulse-glow 1s infinite alternate;
+}
+
+.la-pulse-dot.steady {
+  background: #69db7c;
+  box-shadow: 0 0 8px #69db7c;
+}
+
+@keyframes pulse-glow {
+  from { transform: scale(0.9); opacity: 0.7; }
+  to { transform: scale(1.25); opacity: 1; }
+}
+
+.la-subtitle {
+  font-size: 0.76rem;
+  color: #868e96;
+}
+
+.la-timer {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 0.25rem 0.65rem;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.la-stages-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.la-stage-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 0.95rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  transition: all 0.15s ease;
+}
+
+.la-stage-item.stage-done {
+  background: rgba(105, 219, 124, 0.06);
+  border-color: rgba(105, 219, 124, 0.2);
+}
+
+.la-stage-item.stage-running {
+  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.la-stage-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.la-icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+}
+
+.la-icon-done {
+  color: #69db7c;
+}
+
+.la-icon-spin {
+  color: #38bdf8;
+  animation: spin 1s linear infinite;
+}
+
+.la-icon-pending {
+  color: #495057;
+}
+
+.la-stage-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #adb5bd;
+}
+
+.stage-done .la-stage-label {
+  color: #fff;
+}
+
+.stage-running .la-stage-label {
+  color: #38bdf8;
+  font-weight: 700;
+}
+
+.la-stage-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.la-stage-ms {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #69db7c;
+  background: rgba(105, 219, 124, 0.12);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+}
+
+.la-running-tag {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  letter-spacing: 0.05em;
+}
+
+.la-completion-strip {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgba(105, 219, 124, 0.1);
+  border: 1px solid rgba(105, 219, 124, 0.3);
+  border-radius: 8px;
+  font-size: 0.84rem;
+  color: #69db7c;
+}
+
+.la-comp-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 700;
+}
+
+.la-comp-speed {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}

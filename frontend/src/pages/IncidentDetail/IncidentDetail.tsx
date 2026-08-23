@@ -16,6 +16,7 @@ import type {
   InvestigationResult,
   PrivacyPreviewData
 } from '../../api/incidents';
+import { LiveAnalysis } from '../../components/LiveAnalysis';
 import './IncidentDetail.css';
 import {
   Clock,
@@ -661,11 +662,9 @@ export const IncidentDetail: React.FC = () => {
                   <Play size={14} /> Run AI Investigation
                 </button>
               </div>
-            ) : (brain2Status === 'PENDING' || brain2Status === 'RUNNING') ? (
-              <div className="empty-state-center">
-                <Loader2 size={36} className="spin empty-icon" />
-                <h3>Investigation {brain2Status === 'PENDING' ? 'Queued' : 'Running'}</h3>
-                <p>Analyzing privacy-safe evidence package...</p>
+            ) : (brain2Status === 'PENDING' || brain2Status === 'RUNNING' || investigating) ? (
+              <div style={{ padding: '1rem 0' }}>
+                <LiveAnalysis isTriggering={true} />
               </div>
             ) : brain2Status === 'FAILED' ? (
               <div className="empty-state-center">

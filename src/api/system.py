@@ -76,10 +76,8 @@ async def get_ai_policy() -> Dict[str, Any]:
         # If it failed verification, or ZERO_EXTERNAL_AI is false
         pass
         
-    return {
-        "zero_egress_enforced": False,
-        "provider": provider_name,
-        "model": os.environ.get("BRAIN2_MODEL", "Unknown"),
-        "endpoint": "EXTERNAL or UNVERIFIED",
-        "message": "Zero egress is not enforced by current configuration."
-    }
+@router.get("/pipeline-status")
+async def get_pipeline_status() -> Dict[str, Any]:
+    from src.services.pipeline_tracker import pipeline_tracker
+    return pipeline_tracker.get_status()
+
