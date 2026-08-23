@@ -75,10 +75,17 @@ async def list_incidents(
         # Fetch signals for counts & sources
         sig_ids = (await db.execute(select(IncidentSignalModel.aggregated_signal_id).where(IncidentSignalModel.incident_id == inc.id))).scalars().all()
         signals = []
+        sources = []
         if sig_ids:
             signals = (await db.execute(select(AggregatedSignalModel).where(AggregatedSignalModel.id.in_(sig_ids)))).scalars().all()
+            alerts_res = await db.execute(
+                select(NormalizedAlertModel.source_vendor, NormalizedAlertModel.source_product)
+                .join(AggregatedSignalAlertModel, AggregatedSignalAlertModel.normalized_alert_id == NormalizedAlertModel.id)
+                .where(AggregatedSignalAlertModel.aggregated_signal_id.in_(sig_ids))
+                .distinct()
+            )
+            sources = [f"{v} {p}".strip() for v, p in alerts_res.all() if v or p]
 
-        sources = list(set(s.entities.get("source_product", "UNKNOWN") for s in signals if s.entities)) if signals else []
         evidence_count = sum(s.occurrence_count for s in signals) if signals else 0
 
         # Short formatted reference (e.g., INC-0042)
