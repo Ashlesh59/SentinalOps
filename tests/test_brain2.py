@@ -229,3 +229,34 @@ async def test_brain2_adversarial_prompt_injection(session: AsyncSession, test_d
     
     await session.refresh(job)
     assert job.status == JobStatus.SUCCEEDED
+
+
+@pytest.mark.asyncio
+async def test_zero_egress_policy():
+    from src.brain2.provider import verify_zero_egress_policy, ProviderError
+    import os
+    
+    # Enable policy
+    os.environ["ZERO_EXTERNAL_AI"] = "true"
+    
+    # 1. External fallback impossible
+    with pytest.raises(ProviderError, match="ZERO_EXTERNAL_AI_POLICY_VIOLATION"):
+        verify_zero_egress_policy("anthropic")
+        
+    # 2. Ollama with local loopback - ALLOWED
+    os.environ["OLLAMA_BASE_URL"] = "http://127.0.0.1:11434"
+    assert verify_zero_egress_policy("ollama") == True
+    
+    # 3. Ollama with domain - BLOCKED
+    os.environ["OLLAMA_BASE_URL"] = "http://localhost:11434"
+    with pytest.raises(ProviderError, match="exactly http://127.0.0.1:11434"):
+        verify_zero_egress_policy("ollama")
+        
+    # 4. Ollama with LAN IP - BLOCKED
+    os.environ["OLLAMA_BASE_URL"] = "http://192.168.1.100:11434"
+    with pytest.raises(ProviderError, match="exactly http://127.0.0.1:11434"):
+        verify_zero_egress_policy("ollama")
+        
+    # 5. Policy disabled - allows external
+    os.environ["ZERO_EXTERNAL_AI"] = "false"
+    assert verify_zero_egress_policy("anthropic") == False

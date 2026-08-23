@@ -473,3 +473,33 @@
   text-align: center;
   padding: 1rem 0;
 }
+
+/* System health badges */
+.sys-overall-badge {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.sys-status-ok { background: rgba(105, 219, 124, 0.15); color: #69db7c; border: 1px solid #69db7c; }
+.sys-status-warn { background: rgba(252, 196, 25, 0.15); color: #fcc419; border: 1px solid #fcc419; }
+.sys-status-fail { background: rgba(255, 107, 107, 0.15); color: #ff6b6b; border: 1px solid #ff6b6b; }
+
+.sys-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.sys-ok { background: rgba(105, 219, 124, 0.15); color: #69db7c; }
+.sys-degraded { background: rgba(252, 196, 25, 0.15); color: #fcc419; }
+.sys-unknown { background: rgba(255, 107, 107, 0.15); color: #ff6b6b; }

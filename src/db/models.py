@@ -118,7 +118,7 @@ class Brain1ProcessingStateModel(Base):
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     tenant_id: Mapped[str] = mapped_column(String, index=True, nullable=False, unique=True)
     last_processed_ingested_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    last_processed_alert_id: Mapped[uuid.UUID] = mapped_column(String, nullable=False)
+    last_processed_alert_id: Mapped[uuid.UUID] = mapped_column(nullable=False)
     correlation_rule_version: Mapped[str] = mapped_column(String, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -138,6 +138,7 @@ class SignalEntityModel(Base):
         Index("ix_signal_entities_lookup", "tenant_id", "entity_type", "entity_value", "last_seen")
     )
 
+
 class AggregatedSignalModel(Base):
     __tablename__ = "aggregated_signals"
 
@@ -146,7 +147,7 @@ class AggregatedSignalModel(Base):
     aggregation_key: Mapped[str] = mapped_column(String, nullable=False)
     aggregation_rule_id: Mapped[str] = mapped_column(String, nullable=False, default="agg-v1")
     rule_version: Mapped[str] = mapped_column(String, nullable=False)
-    creation_anchor_alert_id: Mapped[uuid.UUID] = mapped_column(String, nullable=False)
+    creation_anchor_alert_id: Mapped[uuid.UUID] = mapped_column(nullable=False)
     
     first_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     last_seen: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)

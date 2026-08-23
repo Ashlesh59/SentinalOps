@@ -55,12 +55,17 @@ async def run_correlation(session: AsyncSession, tenant_id: str):
     # We will assume the caller provides a session, and we will execute the lock.
     
     try:
-        lock_res = await session.execute(
-            text("SELECT pg_try_advisory_xact_lock(:lock_id)"),
-            {"lock_id": lock_id}
-        )
-        if not lock_res.scalar():
-            return {"status": "skipped_locked", "message": "Tenant is currently processing"}
+        try:
+            lock_res = await session.execute(
+                text("SELECT pg_try_advisory_xact_lock(:lock_id)"),
+                {"lock_id": lock_id}
+            )
+            if not lock_res.scalar():
+                return {"status": "skipped_locked", "message": "Tenant is currently processing"}
+        except Exception as lock_err:
+            # Skip advisory locks if running on SQLite or non-PostgreSQL DB
+            if "pg_try_advisory_xact_lock" not in str(lock_err).lower() and "no such function" not in str(lock_err).lower():
+                raise lock_err
 
         state = await Brain1State.get_state(session, tenant_id)
         
@@ -129,7 +134,7 @@ async def run_correlation(session: AsyncSession, tenant_id: str):
         if not modified_signals:
             # Update state and commit if no signals to process
             last_alert = alerts[-1]
-            Brain1State.update_state(state, last_alert.ingested_at, str(last_alert.id), state.correlation_rule_version)
+            Brain1State.update_state(state, last_alert.ingested_at, last_alert.id, state.correlation_rule_version)
             await session.commit()
             return {"status": "success", "processed_alerts": len(alerts)}
             
@@ -153,18 +158,25 @@ async def run_correlation(session: AsyncSession, tenant_id: str):
             ents = list(set(ents))
             signal_entities_map[sig.id] = ents
             
-            # Upsert into SignalEntityModel
+            # Insert into SignalEntityModel
             for t, v in ents:
-                # We use ON CONFLICT DO NOTHING to avoid N+1 inserts
-                stmt = insert(SignalEntityModel).values(
-                    tenant_id=tenant_id,
-                    aggregated_signal_id=sig.id,
-                    entity_type=str(t.value),
-                    entity_value=v,
-                    first_seen=sig.first_seen,
-                    last_seen=sig.last_seen
-                ).on_conflict_do_nothing(index_elements=['tenant_id', 'aggregated_signal_id', 'entity_type', 'entity_value'])
-                await session.execute(stmt)
+                entity_exists = await session.scalar(
+                    select(SignalEntityModel.id).where(
+                        SignalEntityModel.tenant_id == tenant_id,
+                        SignalEntityModel.aggregated_signal_id == sig.id,
+                        SignalEntityModel.entity_type == str(t.value),
+                        SignalEntityModel.entity_value == v
+                    )
+                )
+                if not entity_exists:
+                    session.add(SignalEntityModel(
+                        tenant_id=tenant_id,
+                        aggregated_signal_id=sig.id,
+                        entity_type=str(t.value),
+                        entity_value=v,
+                        first_seen=sig.first_seen,
+                        last_seen=sig.last_seen
+                    ))
                 
         # 5. Correlation & Candidates
         policy = CorrelationPolicyResolver.resolve(tenant_id)
@@ -209,19 +221,15 @@ async def run_correlation(session: AsyncSession, tenant_id: str):
                 
                 edges_to_insert = []
                 for cand in candidates:
-                    # We need cand_ents. We can fetch from SignalEntityModel or if it's in modified_signals we have it
-                    if cand.id in signal_entities_map:
-                        cand_ents = signal_entities_map[cand.id]
-                    else:
+                    cand_ents = signal_entities_map.get(cand.id)
+                    if cand_ents is None:
                         cand_ent_res = await session.execute(
                             select(SignalEntityModel)
                             .where(SignalEntityModel.aggregated_signal_id == cand.id)
                         )
                         cand_ents = [(row.entity_type, row.entity_value) for row in cand_ent_res.scalars().all()]
-                        
-                    metrics.pairs_scored += 1
-                    score, reasons = score_pair(sig_ents, cand_ents, sig, cand, policy, context)
                     
+                    score, reasons = score_pair(sig_ents, cand_ents, sig, cand, policy, context)
                     if score >= policy.edge_threshold:
                         edge_id = generate_edge_id(tenant_id, sig.id, cand.id, policy.rule_version)
                         edges_to_insert.append({
@@ -239,9 +247,12 @@ async def run_correlation(session: AsyncSession, tenant_id: str):
                         new_edges.append(edge)
                         metrics.edges_created += 1
 
-                if edges_to_insert:
-                    stmt = insert(CorrelationEdgeModel).values(edges_to_insert).on_conflict_do_nothing(index_elements=['id'])
-                    await session.execute(stmt)
+                for edge_data in edges_to_insert:
+                    edge_exists = await session.scalar(
+                        select(CorrelationEdgeModel.id).where(CorrelationEdgeModel.id == edge_data["id"])
+                    )
+                    if not edge_exists:
+                        session.add(CorrelationEdgeModel(**edge_data))
                         
             # 6. Incident Seeding / Matching
             best_inc = match_incident(sig, sig_ents, new_edges, active_incidents, policy, context)
@@ -336,20 +347,23 @@ async def run_correlation(session: AsyncSession, tenant_id: str):
                         metrics.incidents_created += 1
                         active_incidents.append((new_inc, {sig.id}))
                     
-        # Flush pending additions (like new incidents) before bulk inserting links
+        # Flush pending additions (like new incidents) before inserting links
         await session.flush()
         
-        # Bulk insert links
+        # Insert links
         for inc_id, sig_id in incident_signal_links:
-            stmt = insert(IncidentSignalModel).values(
-                incident_id=inc_id,
-                aggregated_signal_id=sig_id
-            ).on_conflict_do_nothing(index_elements=['incident_id', 'aggregated_signal_id'])
-            await session.execute(stmt)
+            link_exists = await session.scalar(
+                select(IncidentSignalModel.id).where(
+                    IncidentSignalModel.incident_id == inc_id,
+                    IncidentSignalModel.aggregated_signal_id == sig_id
+                )
+            )
+            if not link_exists:
+                session.add(IncidentSignalModel(incident_id=inc_id, aggregated_signal_id=sig_id))
             
         # 7. Update State
         last_alert = alerts[-1]
-        Brain1State.update_state(state, last_alert.ingested_at, str(last_alert.id), policy.rule_version)
+        Brain1State.update_state(state, last_alert.ingested_at, last_alert.id, policy.rule_version)
         
         # Commit the transaction explicitly
         await session.commit()

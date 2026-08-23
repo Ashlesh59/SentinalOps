@@ -9,6 +9,7 @@ from src.ingestion.format_detector import FormatDetector
 from src.ingestion.parsers.registry import ParserRegistry
 from src.ingestion.parsers.base import ParseError
 from src.services.ingestion import IngestionService
+from src.brain1.engine import run_correlation
 
 logger = logging.getLogger(__name__)
 
@@ -143,3 +144,12 @@ class FileImportService:
             job.status = ImportJobStatus.COMPLETED
 
         await self.db.commit()
+
+        # Auto-run Brain 1 correlation if any records were successfully processed.
+        # This reuses the same run_correlation call used by the demo scenario.
+        if job.normalized > 0:
+            try:
+                await run_correlation(self.db, tenant_id)
+            except Exception as e:
+                logger.error(f"Brain 1 correlation failed after import {job_id}: {e}")
+                # Do not fail the import job — raw evidence is already persisted.

@@ -59,9 +59,9 @@ export const Incidents: React.FC = () => {
             </thead>
             <tbody>
               {incidents.map(inc => {
-                const ref = inc.reference || `INC-${inc.incident_id.slice(0, 4).toUpperCase()}`;
-                const userAnchor = inc.anchor_entities?.USER?.[0] || 'alice_admin';
-                const hostAnchor = inc.anchor_entities?.HOST?.[0] || inc.anchor_entities?.IP?.[0] || '192.168.1.50';
+                const ref = inc.reference;
+                const userAnchor = inc.anchor_entities?.USER?.[0];
+                const hostAnchor = inc.anchor_entities?.HOST?.[0] || inc.anchor_entities?.IP?.[0];
 
                 return (
                   <tr key={inc.incident_id} onClick={() => navigate(`/incidents/${inc.incident_id}`)} className="clickable-row">
@@ -69,30 +69,32 @@ export const Incidents: React.FC = () => {
                       <span className="clean-ref-tag">{ref}</span>
                     </td>
                     <td className="title-cell">
-                      <strong>{inc.title || 'Security Incident'}</strong>
+                      <strong>{inc.title}</strong>
                       <span className="type-sub">{inc.incident_type}</span>
                     </td>
                     <td><span className={`sev-badge sev-${inc.severity.toLowerCase()}`}>{inc.severity}</span></td>
-                    <td><span className={`pri-badge pri-${(inc.priority || 'HIGH').toLowerCase()}`}>{inc.priority || 'HIGH'}</span></td>
+                    <td>{inc.priority && <span className={`pri-badge pri-${inc.priority.toLowerCase()}`}>{inc.priority}</span>}</td>
                     <td><span className="status-tag">{inc.status}</span></td>
                     <td className="entity-cell">
-                      <div className="entity-item"><strong>User:</strong> {userAnchor}</div>
-                      <div className="entity-item"><strong>Host:</strong> {hostAnchor}</div>
+                      {userAnchor && <div className="entity-item"><strong>User:</strong> {userAnchor}</div>}
+                      {hostAnchor && <div className="entity-item"><strong>Host:</strong> {hostAnchor}</div>}
+                      {!userAnchor && !hostAnchor && <span className="empty-val">N/A</span>}
                     </td>
                     <td className="time-cell">
-                      <span className="dur-badge">{inc.duration || '12 min'}</span>
+                      <span className="dur-badge">{inc.duration}</span>
                       <span className="time-sub">{inc.first_seen ? new Date(inc.first_seen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</span>
                     </td>
                     <td className="sources-cell">
                       <div className="sources-wrap">
-                        {(inc.sources && inc.sources.length > 0 ? inc.sources : ['Okta', 'Falcon', 'PAN-OS']).map(src => (
+                        {(inc.sources?.length ? inc.sources : []).map(src => (
                           <span key={src} className="src-pill">{src}</span>
                         ))}
+                        {!inc.sources?.length && <span className="empty-val">N/A</span>}
                       </div>
                     </td>
                     <td className="counts-cell">
-                      <span className="sig-count">{inc.signal_count || 4} sigs</span>
-                      <span className="evid-count">{inc.evidence_count || 22} alerts</span>
+                      <span className="sig-count">{inc.signal_count} sigs</span>
+                      <span className="evid-count">{inc.evidence_count} alerts</span>
                     </td>
                     <td>
                       <span className={`b2-badge b2-${inc.brain2_status.toLowerCase()}`}>

@@ -76,9 +76,9 @@ export const Overview: React.FC = () => {
         <div className="kpi-card warning">
           <div className="kpi-icon"><AlertTriangle size={20} /></div>
           <div className="kpi-info">
-            <div className="kpi-title">High Priority</div>
-            <div className="kpi-val">{summary.high_priority_incidents || summary.critical_incidents}</div>
-            <div className="kpi-sub">Elevated Threat Level</div>
+            <div className="kpi-title">HIGH+ Severity</div>
+            <div className="kpi-val">{summary.high_priority_incidents}</div>
+            <div className="kpi-sub">Incidents (HIGH or CRITICAL)</div>
           </div>
         </div>
 
@@ -86,10 +86,8 @@ export const Overview: React.FC = () => {
           <div className="kpi-icon"><Cpu size={20} /></div>
           <div className="kpi-info">
             <div className="kpi-title">AI Investigations</div>
-            <div className="kpi-val">{summary.investigations}</div>
-            <div className="kpi-sub">
-              {summary.investigations_pending ? `${summary.investigations_pending} Pending` : 'Ready on Demand'}
-            </div>
+            <div className="kpi-val">{summary.investigations_succeeded}</div>
+            <div className="kpi-sub">Completed AI investigations</div>
           </div>
         </div>
 
@@ -98,7 +96,7 @@ export const Overview: React.FC = () => {
           <div className="kpi-info">
             <div className="kpi-title">Noise Reduction</div>
             <div className="kpi-val">
-              {summary.noise_reduction_percent !== undefined ? `${summary.noise_reduction_percent}%` : '81.8%'}
+              {summary.noise_reduction_percent}%
             </div>
             <div className="kpi-sub">{summary.normalized_alerts} alerts → {summary.analytical_signals} signals</div>
           </div>
@@ -128,8 +126,8 @@ export const Overview: React.FC = () => {
           ) : (
             <div className="incident-cards-list">
               {topIncidents.map((inc) => {
-                const ref = inc.reference || `INC-${inc.incident_id.slice(0, 4).toUpperCase()}`;
-                const userAnchor = inc.anchor_entities?.USER?.[0] || 'Unknown User';
+                const ref = inc.reference;
+                const userAnchor = inc.anchor_entities?.USER?.[0];
                 return (
                   <div 
                     key={inc.incident_id} 
@@ -140,20 +138,22 @@ export const Overview: React.FC = () => {
                       <div className="iac-header">
                         <span className="iac-ref">{ref}</span>
                         <span className={`sev-badge sev-${inc.severity.toLowerCase()}`}>{inc.severity}</span>
-                        <span className={`pri-badge pri-${(inc.priority || 'HIGH').toLowerCase()}`}>
-                          Priority: {inc.priority || 'HIGH'}
-                        </span>
+                        {inc.priority && (
+                          <span className={`pri-badge pri-${inc.priority.toLowerCase()}`}>
+                            Priority: {inc.priority}
+                          </span>
+                        )}
                         <span className="iac-status">{inc.status}</span>
                       </div>
-                      <div className="iac-title">{inc.title || 'Security Incident'}</div>
+                      <div className="iac-title">{inc.title}</div>
                       <div className="iac-meta">
-                        <span><strong>Affected:</strong> {userAnchor}</span>
+                        {userAnchor ? <span><strong>Affected:</strong> {userAnchor}</span> : <span className="empty-val">Affected: N/A</span>}
                         <span>•</span>
-                        <span><strong>Duration:</strong> {inc.duration || 'Active'}</span>
+                        <span><strong>Duration:</strong> {inc.duration}</span>
                         <span>•</span>
-                        <span><strong>Sources:</strong> {inc.sources?.join(', ') || 'IAM, XDR, Firewall'}</span>
+                        <span><strong>Sources:</strong> {inc.sources?.length ? inc.sources.join(', ') : 'N/A'}</span>
                         <span>•</span>
-                        <span><strong>Signals:</strong> {inc.signal_count || 4}</span>
+                        <span><strong>Signals:</strong> {inc.signal_count}</span>
                       </div>
                     </div>
                     <div className="iac-right">
@@ -197,8 +197,12 @@ export const Overview: React.FC = () => {
               </div>
             </div>
             <div className="reduction-stat">
-              <strong>{summary.noise_reduction_percent !== undefined ? `${summary.noise_reduction_percent}%` : '81.8%'}</strong>
-              <span>Analytical Noise Eliminated</span>
+              <strong>{summary.noise_reduction_percent}%</strong>
+              <span>Analytical Compression
+                <span style={{display:'block', fontSize:'0.72rem', color:'var(--text-muted)', marginTop:'2px'}}>
+                  Formula: 1 − (signals ÷ alerts)
+                </span>
+              </span>
             </div>
           </div>
 

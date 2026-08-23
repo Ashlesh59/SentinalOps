@@ -1,3 +1,4 @@
+from typing import Any, Union
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from src.db.models import Brain1ProcessingStateModel
@@ -17,14 +18,16 @@ class Brain1State:
             state = Brain1ProcessingStateModel(
                 tenant_id=tenant_id,
                 last_processed_ingested_at=datetime(1970, 1, 1, tzinfo=timezone.utc),
-                last_processed_alert_id=str(uuid.UUID(int=0)),
+                last_processed_alert_id=uuid.UUID(int=0),
                 correlation_rule_version="corr-v2"
             )
             session.add(state)
         return state
 
     @staticmethod
-    def update_state(state: Brain1ProcessingStateModel, last_ingested_at: datetime, last_alert_id: str, rule_version: str):
+    def update_state(state: Brain1ProcessingStateModel, last_ingested_at: datetime, last_alert_id: Any, rule_version: str):
         state.last_processed_ingested_at = last_ingested_at
+        if isinstance(last_alert_id, str):
+            last_alert_id = uuid.UUID(last_alert_id)
         state.last_processed_alert_id = last_alert_id
         state.correlation_rule_version = rule_version

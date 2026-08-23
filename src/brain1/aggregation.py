@@ -80,7 +80,7 @@ async def process_and_group_alerts(session: AsyncSession, tenant_id: str, alerts
                 aggregation_key=agg_key,
                 aggregation_rule_id=rule.rule_id,
                 rule_version=rule.rule_version,
-                creation_anchor_alert_id=str(alert.id),
+                creation_anchor_alert_id=alert.id,
                 first_seen=alert.timestamp,
                 last_seen=alert.timestamp,
                 occurrence_count=1,

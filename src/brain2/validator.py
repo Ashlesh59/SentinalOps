@@ -31,9 +31,24 @@ class Brain2Validator:
         if self.uuid_pattern.search(raw_json):
             raise ValidationCorrectionError("Output contains raw UUIDs", "Your output leaked internal UUIDs. Use safe aliases only.")
             
+        # Clean markdown codeblocks if model wrapped JSON in ```json ... ```
+        cleaned_json = raw_json.strip()
+        if cleaned_json.startswith("```json"):
+            cleaned_json = cleaned_json[7:]
+        elif cleaned_json.startswith("```"):
+            cleaned_json = cleaned_json[3:]
+        if cleaned_json.endswith("```"):
+            cleaned_json = cleaned_json[:-3]
+        cleaned_json = cleaned_json.strip()
+
         # 1. Parse JSON and Pydantic Schema
         try:
-            data = json.loads(raw_json)
+            data = json.loads(cleaned_json)
+            # Normalize action types in next_best_actions if present
+            if isinstance(data, dict) and "next_best_actions" in data and isinstance(data["next_best_actions"], list):
+                for act in data["next_best_actions"]:
+                    if isinstance(act, dict) and "action_type" in act:
+                        act["action_type"] = str(act["action_type"]).upper().strip()
             parsed = InvestigationResultSchema(**data)
         except json.JSONDecodeError as e:
             raise ValidationCorrectionError(f"JSON Parse Error: {str(e)}", "Your output was not valid JSON.")
@@ -58,6 +73,7 @@ class Brain2Validator:
                 
         # Check actions
         for action in parsed.next_best_actions:
+            action.action_type = action.action_type.upper().strip()
             if action.action_type not in self.approved_actions:
                 raise ValidationCorrectionError(f"Invalid action type: {action.action_type}", f"Action type must be one of {self.approved_actions}")
             for ref in action.supporting_evidence_refs:
@@ -72,7 +88,6 @@ class Brain2Validator:
                     
         if hallucinations:
             # We strictly reject hallucinations.
-            # In a real app we might ask the LLM to correct it, but we'll raise an error here.
             raise HallucinatedEvidenceError(f"LLM cited unknown/hallucinated evidence references: {set(hallucinations)}")
             
         return parsed

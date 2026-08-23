@@ -8,7 +8,7 @@ from src.db.models import IncidentModel, InvestigationJobModel, InvestigationRes
 from src.brain2.selector import EvidenceSelector
 from src.brain1.snapshot import SnapshotBuilder
 from src.brain2.worker import Brain2Worker
-from src.brain2.provider import MockProvider
+from src.brain2.provider import get_provider
 
 router = APIRouter()
 
@@ -19,7 +19,7 @@ async def run_worker_for_job(job_id: uuid.UUID):
     async with async_session() as session:
         job = (await session.execute(select(InvestigationJobModel).where(InvestigationJobModel.id == job_id))).scalars().first()
         if job and job.status == JobStatus.PENDING:
-            worker = Brain2Worker(session=session, provider=MockProvider(behavior="SUCCESS"))
+            worker = Brain2Worker(session=session, provider=get_provider())
             await worker.execute_job(job)
 
 @router.post("/incidents/{incident_id}/investigations", status_code=status.HTTP_202_ACCEPTED)
